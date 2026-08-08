@@ -1,32 +1,25 @@
-from transformers import (
-    BartForConditionalGeneration, 
-    BartTokenizer,
-    AutoTokenizer,
-    AutoModelForSeq2SeqLM
-)
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from peft import PeftModel
 import config
 
 class ModelRegistry:
     def __init__(self):
-        print("Loading BART Summarization Model...")
-        self.summary_tokenizer = BartTokenizer.from_pretrained(config.BART_NAME)
-        self.summary_model = BartForConditionalGeneration.from_pretrained(config.BART_NAME)
-        print("BART Model loaded successfully!")
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Loading Model System onto Device: {self.device}")
 
-        print("Loading Grammar Correction Model...")
-        self.gec_tokenizer = AutoTokenizer.from_pretrained(config.GEC_MODEL_PATH)
-        self.gec_model = AutoModelForSeq2SeqLM.from_pretrained(config.GEC_MODEL_PATH)
-        print("GEC Model loaded successfully!")
 
-        print("Loading Paraphrasing Model...")
-        self.paraphrasing_tokenizer = AutoTokenizer.from_pretrained(
-            config.PARAPHRASING_MODEL_PATH, 
-            local_files_only=isinstance(config.PARAPHRASING_MODEL_PATH, type(config.BASE_DIR))
-        )
-        self.paraphrasing_model = AutoModelForSeq2SeqLM.from_pretrained(
-            config.PARAPHRASING_MODEL_PATH, 
-            local_files_only=isinstance(config.PARAPHRASING_MODEL_PATH, type(config.BASE_DIR))
-        )
-        print("Paraphrasing Model loaded successfully!")
+        self.tokenizer = AutoTokenizer.from_pretrained(config.BASE_MODEL)
+
+
+        self.base_model = AutoModelForSeq2SeqLM.from_pretrained(config.BASE_MODEL)
+
+    
+        self.model = PeftModel.from_pretrained(self.base_model, config.ADAPTER_PATH)
+        self.model.print_trainable_parameters()
+        self.model.eval()
+        self.model.to(self.device)
+
+        print("Single Multi-Task Model with Adapter Loaded Successfully!")
 
 models = ModelRegistry()

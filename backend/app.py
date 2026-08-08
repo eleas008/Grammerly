@@ -7,24 +7,35 @@ from inference import generate_summary, correct_grammar, paraphrase_text
 app = Flask(__name__)
 CORS(app)
 
+TASK_HANDLERS = {
+    'SUMMARY': generate_summary,
+    'GRAMMAR CORRECTION': correct_grammar,
+    'GRAMMER CORRECTION': correct_grammar,
+    'PARAPHRASE': paraphrase_text
+}
+
 @app.route('/process', methods=['POST'])
 def process_text():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     raw_text = data.get('text', '')
-    mode = data.get('mode', 'SUMMARY').upper()
+    mode = data.get('mode', 'SUMMARY').upper().strip()
+
+    if not raw_text.strip():
+        return jsonify({"output": "Input text cannot be empty."}), 400
+
+    handler = TASK_HANDLERS.get(mode)
+    if not handler:
+        return jsonify({"output": f"Invalid mode. Supported modes: {list(TASK_HANDLERS.keys())}"}), 400
 
     clean_text = preprocess_text(raw_text)
 
-    if mode == 'SUMMARY':
-        output = generate_summary(clean_text)
-    elif mode in ['GRAMMAR CORRECTION', 'GRAMMER CORRECTION']:
-        output = correct_grammar(clean_text)
-    elif mode == 'PARAPHRASE':
-        output = paraphrase_text(clean_text)
-    else:
-        output = "Invalid mode selected."
 
-    return jsonify({"output": output})
+    output = handler(clean_text)
+
+    return jsonify({
+        "preprocessed_text": clean_text,
+        "output": output
+    })
 
 
 if __name__ == '__main__':
