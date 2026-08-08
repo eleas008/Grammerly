@@ -141,7 +141,18 @@ del.diff-removed {
   padding: 2px 4px;
   border-radius: 4px;
   margin-right: 2px;
+  
+  /* Prevent interaction */
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
 }
+
+del.diff-removed::before {
+  content: attr(data-text);
+}
+
+
 
 .output-box {
   background-color: #ffffff;
