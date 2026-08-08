@@ -8,7 +8,6 @@ export function renderDiffText(inputText, outputText) {
   dmp.diff_cleanupSemantic(diffs);
 
   return diffs.map(([operation, text], index) => {
-    // 1 = Insertion (added/corrected)
     if (operation === 1) {
       return (
         <mark key={index} className="diff-added">
@@ -16,12 +15,9 @@ export function renderDiffText(inputText, outputText) {
         </mark>
       );
     }
-    // -1 = Deletion (removed/error)
     if (operation === -1) {
       return (
-        <del key={index} className="diff-removed">
-          {text}
-        </del>
+        <del key={index} className="diff-removed" data-text={text} />
       );
     }
     // 0 = Unchanged
